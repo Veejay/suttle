@@ -1,0 +1,22 @@
+{
+  "name": "suttle",
+  "version": "1.0.0",
+  "description": "Suttle, don't settle for less than the saddle",
+  "main": "main.js",
+  "repository": {
+    "url": "https://github.com/Veejay/suttle.git",
+    "type": "git"
+  },
+  "author": "Bertrand Chardon <bertrand.chardon@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^0.22.0",
+    "q": "^1.4.1",
+    "request": "^2.79.0",
+    "standard": "^8.5.0"
+  },
+  "devDependencies": {
+    "electron": "^1.4.7",
+    "glob": "^7.1.1"
+  }
+}
