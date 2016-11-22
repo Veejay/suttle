@@ -8,10 +8,8 @@ class SubtitleScorer {
   }
   score (subtitleFileName) {
     const segments = subtitleFileName.split(this.separator).map(e => e.toLowerCase())
-    console.log(segments)
     return segments.reduce((score, chunk) => {
       let weight = 1
-      console.log(this.parser.episodeNumber)
       if (this.parser.hasEpisodeNumber() && Object.is(this.parser.episodeNumber, chunk)) {
         weight *= 2
       }
@@ -31,7 +29,7 @@ class SubtitleScorer {
       }
       return memo
     }, {name: '', score: -1})
-    console.log(`The best match for file ${this.fileName} is ${JSON.stringify(bestMatch)}`)
+    return bestMatch
   }
 }
 

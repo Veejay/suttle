@@ -2,56 +2,42 @@ const Q = require('q')
 const cheerio = require('cheerio')
 const queryString = require('querystring')
 const Pinky = require('./pinky.js')
-const FileNameParser = require('./file_name_parser.js')
 
+const SubtitleScorer = require('./subtitle_scorer.js')
 
-const queryUrl = (name) => {
-  const BASE = 'https://subscene.com/subtitles/release?q='
-  return `${BASE}${queryString.escape(name)}`
+const FILTERS = {
+  englishSubtitle: (object) => {
+    return Object.is(object.language.trim(), 'English')
+  },
+  isDefined: (object) => {
+    return Object.keys(object).every(key => {
+      return object[key]
+    })
+  }
 }
 
 class SubsceneProxy {
-
   getSubtitle (name) {
     return Q.promise((resolve, reject) => {
-      Pinky.request(queryUrl(name)).then(html => {
+      Pinky.request(`https://subscene.com/subtitles/release?q=${queryString.escape(name)}`).then(html => {
         let $ = cheerio.load(html)
-        let matches = []
-        const segments = name.split('.')
-
-        $('table tr').each((index, element) => {
-          const firstColumnContent = cheerio(element).find('td.a1').text().trim()
+        const fileNames = $('table tr').map((index, element) => {
+          const firstColumn = cheerio(element).find('td.a1')
+          const firstColumnContent = firstColumn.text().trim()
           let [language, name] = firstColumnContent.split(/\s{2,}/)
-          if ([language, name].every(e => typeof e !== 'undefined') && Object.is(language.trim(), 'English')) {
-
-            let parser = new FileNameParser(name)
-            let score = 0
-            // If the video file is a TV show episode, there
-            // might be an episode number in the name
-            if (parser.hasEpisodeNumber()) {
-              if (segments.includes(parser.episodeNumber)) {
-                for (let segment of segments) {
-                  if (name.indexOf(segment) !== -1) {
-                    score += 1
-                  }
-                }
-                const data = { score: score, name: name, link: cheerio(element).find('td.a1 a').attr('href') }
-                matches.push(data)
-              }
-            } else {
-              for (let segment of segments) {
-                if (name.indexOf(segment) !== -1) {
-                  score += 1
-                }
-              }
-              matches.push({ score: score, name: name, link: cheerio(element).find('td.a1 a').attr('href') })
-            }
-          }
+          let link = cheerio(element).find('td.a1').find('a').attr('href')
+          return { language, name, link }
         })
-        console.log(matches)
-        Pinky.request('https://subscene.com' + matches[0].link).then(body => {
-          const selector = cheerio.load(body)
-          resolve(selector('a[href^="/subtitle/download"]').attr('href'))
+        const scorer = new SubtitleScorer({ fileName: name })
+        const names = fileNames.toArray().filter(object => {
+          return FILTERS.englishSubtitle(object)
+        }).filter(object => {
+          return FILTERS.isDefined(object)
+        })
+        const bestSubtitle = scorer.findBestMatch(names).match
+        Pinky.request(`https://subscene.com${bestSubtitle.link}`).then(html => {
+          let selector = cheerio.load(html)
+          resolve(selector('a#downloadButton').attr('href'))
         }).catch(error => {
           reject(error)
         })

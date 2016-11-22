@@ -9,7 +9,7 @@ class ContentProxy {
     }
   }
   getSubtitle (name) {
-    this.proxy.getSubtitle(name)
+    return this.proxy.getSubtitle(name)
   }
 }
 
