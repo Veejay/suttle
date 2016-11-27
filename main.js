@@ -1,6 +1,9 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path')
+const pathname = require('path')
 const url = require('url')
+const SubtitleDownloader = require('./js/modules/subtitle_downloader.js')
+const fs = require('fs')
+const rimraf = require('rimraf')
 
 const Directory = require('./js/modules/directory.js')
 // Keep a global reference of the window object, if you don't, the window will
@@ -13,7 +16,7 @@ function createWindow () {
 
   // and load the index.html of the app.
   win.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
+    pathname: pathname.join(__dirname, 'index.html'),
     protocol: 'file:',
     slashes: true
   }))
@@ -35,9 +38,27 @@ function createWindow () {
 
   ipcMain.on('download:subtitle', (event, path) => {
     const downloader = new SubtitleDownloader(path)
-    downloader.download().then(pathToSubtitle => {
-      event.sender.send('download:subtitle', pathToSubtitle)
-    })
+    const pathInfo = pathname.parse(path)
+    const subtitlePath = pathname.join(pathInfo.dir, pathInfo.name)
+    downloader.saveAs(subtitlePath).then(downloadPath => {
+      fs.readdir(subtitlePath, (error, entries) => {
+        if (error) {
+          console.log(error)
+        } else {
+          entries.each(entry => {
+            if (Object.is(pathname.extname(entry), '.srt')) {
+              const info = pathname.parse(entry)
+              const dir = info.dir
+              dir.replace(/\/(.*)$/, '')
+              fs.renameSync(entry, pathname.join(dir, info.base))
+              console.log('Cleaning up')
+              rimraf(subtitlePath)
+              event.sender.send('download:subtitle', path)
+            }
+          })
+        }
+      })
+    }).catch(error => console.log(error))
   })
 }
 

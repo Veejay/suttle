@@ -4,18 +4,18 @@ const ContentProxy = require('./content_proxy.js')
 const unzip = require('unzip')
 
 class SubtitleDownloader {
-  constructor (path) {
+  constructor(path) {
     this.fileName = pathname.basename(path)
   }
-  saveAs (path) {
-    const proxy = new ContentProxy('subscene')
-    console.log(proxy)
-    proxy.getSubtitle(this.fileName).then(url => {
-      console.log(`https://subscene.com${url}`)
-      request(`https://subscene.com${url}`).pipe(unzip.Extract({ path: path }))
-      console.log("Downloaded.\nExtracted.\nRenamed.")
-    }).catch(error => {
-      console.log(error)
+  saveAs(path) {
+    return new Promise((resolve, reject) => {
+      const proxy = new ContentProxy('subscene')
+      proxy.getSubtitle(this.fileName).then(url => {
+        request(`https://subscene.com${url}`).pipe(unzip.Extract({ path: path }))
+        resolve(path)
+      }).catch(error => {
+        reject(error)
+      })
     })
   }
 }

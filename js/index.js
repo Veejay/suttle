@@ -30,5 +30,5 @@ container.addEventListener('click', (event) => {
 })
 
 ipcRenderer.on('download:subtitle', (event, path) => {
-  console.log(`Downloaded the subtitle to ${path}`)
+  window.alert('Download successful')
 })
