@@ -8,6 +8,14 @@ class Collection {
     }, Object.create(null)))
     this.page = page
   }
+  elementAt ({index}) {
+    let i = 0
+    for (let value of this.values()) {
+      if (Object.is(i++, index)) {
+        return value
+      }
+    }
+  }
   add (item) {
     this._map.set(item.id, item)
     return item
@@ -16,7 +24,8 @@ class Collection {
     this._map.set(item.id, item)
   }
   first () {
-    return this.values[0]
+    const [head, _] = this._map.values()
+    return head
   }
   get (id) {
     return this._map.get(id)

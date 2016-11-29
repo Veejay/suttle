@@ -93,6 +93,9 @@ const data = {
 }
 
 const page = new Page(data.page)
+const widget = page.sections.first().rows.first().columns.first().widgets.first()
+const targetCollection = page.sections.first().rows.elementAt({index: 1}).columns.elementAt({index: 3}).widgets
+widget.moveTo(targetCollection.path)
 const html = page.render()
 const tidyOptions = {
   doctype: 'html5',
