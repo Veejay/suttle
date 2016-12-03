@@ -12,7 +12,7 @@ let win
 
 function createWindow () {
   // Create the browser window.
-  win = new BrowserWindow({ width: 800, height: 600 })
+  win = new BrowserWindow({ width: 800, height: 600, backgroundColor: '#222' })
 
   // and load the index.html of the app.
   win.loadURL(url.format({
@@ -36,29 +36,78 @@ function createWindow () {
     })
   })
 
-  ipcMain.on('download:subtitle', (event, path) => {
-    const downloader = new SubtitleDownloader(path)
-    const pathInfo = pathname.parse(path)
-    const subtitlePath = pathname.join(pathInfo.dir, pathInfo.name)
-    downloader.saveAs(subtitlePath).then(downloadPath => {
-      fs.readdir(subtitlePath, (error, entries) => {
+  const readDirectory = (path) => {
+    console.log('RELATIVE SUBTITLE DIRECTORY PATH: ', path)
+    return new Promise((resolve, reject) => {
+      fs.readdir(path, (error, entries) => {
         if (error) {
-          console.log(error)
+          reject(error)
         } else {
-          entries.each(entry => {
-            if (Object.is(pathname.extname(entry), '.srt')) {
-              const info = pathname.parse(entry)
-              const dir = info.dir
-              dir.replace(/\/(.*)$/, '')
-              fs.renameSync(entry, pathname.join(dir, info.base))
-              console.log('Cleaning up')
-              rimraf(subtitlePath)
-              event.sender.send('download:subtitle', path)
-            }
-          })
+          resolve({entries, path})
         }
       })
-    }).catch(error => console.log(error))
+    })
+  }
+
+  const findSubtitle = ({entries, path}) => {
+    console.log('FILES IN DIRECTORY: ', entries)
+    console.log('PATH TO SUBTITLE DIRECTORY', path)
+    return new Promise((resolve, reject) => {
+      for (let entry of entries) {
+        if (Object.is(pathname.extname(entry), '.srt')) {
+          resolve(pathname.join(path, entry))
+        }
+      }
+      reject(new Error('No subtitle in this directory'))
+    })
+  }
+
+  const renameSubtitle = (path, newPath) => {
+    console.log('FORMER PATH TO SUBTITLE FILE: ', path)
+    console.log('NEW PATH TO SUBTITLE FILE: ', newPath)
+    return new Promise((resolve, reject) => {
+      fs.rename(path, newPath, (error) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(pathname.parse(path).dir)
+        }
+      })
+    })
+  }
+
+  const cleanup = (path) => {
+    return new Promise((resolve, reject) => {
+      console.log('Cleaning up...')
+      rimraf(path, (error) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(true)
+        }
+      })
+    })
+  }
+
+  ipcMain.on('download:subtitle', (event, videoPath) => {
+    const downloader = new SubtitleDownloader(videoPath)
+    console.log('PATH TO VIDEO FILE: ', videoPath)
+    const pathInfo = pathname.parse(videoPath)
+    // The directory extracted from the ZIP archive will be saved to DIR/NAME where
+    // DIR is the directory of the video file and NAME is the name of the video file without extension
+    const subtitlePath = pathname.join(pathInfo.dir, pathInfo.name)
+    downloader
+      .saveAs(subtitlePath)
+      .then(readDirectory)
+      .then(findSubtitle)
+      .then(result => {
+        console.log(result)
+        return renameSubtitle(result, pathname.join(pathInfo.dir, `${pathname.basename(videoPath, '.mkv')}.srt`))
+      })
+      .then(cleanup)
+      .then(done => {
+        event.sender.send('download:subtitle', videoPath)
+      }).catch(console.error)
   })
 }
 

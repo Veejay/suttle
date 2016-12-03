@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}/fixture.js",
+            "program": "${workspaceRoot}/fetch.js",
             "cwd": "${workspaceRoot}"
         },
         {

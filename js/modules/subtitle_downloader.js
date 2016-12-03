@@ -7,12 +7,14 @@ class SubtitleDownloader {
   constructor(path) {
     this.fileName = pathname.basename(path)
   }
-  saveAs(path) {
+  saveAs (path) {
     return new Promise((resolve, reject) => {
       const proxy = new ContentProxy('subscene')
       proxy.getSubtitle(this.fileName).then(url => {
         request(`https://subscene.com${url}`).pipe(unzip.Extract({ path: path }))
-        resolve(path)
+        setTimeout(() => {
+          resolve(path)
+        }, 1000)
       }).catch(error => {
         reject(error)
       })

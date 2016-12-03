@@ -6,7 +6,7 @@ directoryPicker.addEventListener('change', (event) => {
   const paths = event.target.files
   const directoryPath = paths[0].path
   ipcRenderer.send('directory:list', directoryPath)
-  ipcRenderer.once('directory:list', (event, entries) => {
+  ipcRenderer.on('directory:list', (event, entries) => {
     const items = entries.reduce((acc, entry) => {
       acc += `
       <li class="directory-entry">
@@ -18,6 +18,17 @@ directoryPicker.addEventListener('change', (event) => {
     document.querySelector('div.file-list ul').innerHTML = items
   })
 })
+
+const pickerButton = document.querySelector('div.picker')
+
+pickerButton.addEventListener('click', (event) => {
+  const clickEvent = new MouseEvent('click')
+  directoryPicker.dispatchEvent(clickEvent)
+  event.preventDefault()
+  return true
+})
+
+directoryPicker
 
 const container = document.querySelector('div.file-list')
 

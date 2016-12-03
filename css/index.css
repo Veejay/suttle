@@ -1,3 +1,47 @@
 div.file-list ul li {
   list-style-type: none;
 }
+body {
+  color: white
+}
+input[type="file"] {
+  visibility: hidden
+}
+
+div.picker {
+  /* Positioning */
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px 8px;
+  /* Dimensions */
+    width: 300px;
+    height: 100px;
+    min-width: 300px;
+    min-height: 100px;
+  /* Appearance */
+    cursor: auto;
+    background-color: fuchsia;
+    border-radius: 2px;
+    box-shadow: 2px 4px 5px 0 rgba(240, 240, 240, 0.26);
+}
+
+div.picker:hover {
+  cursor: pointer
+}
+
+div.action-icon {
+  order: 1;
+  margin: auto 4px
+}
+div.action-description {
+  order: 2;
+  margin: auto 4px;
+  padding: 4px 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 26px;
+  font-weight: bold
+}
